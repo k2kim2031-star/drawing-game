@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fruit Draw Survival</title>
+
+<style>
+    body {
+        margin: 0;
+        overflow: hidden;
+        background: #12091c;
+        font-family: Arial, sans-serif;
+    }
+
+    canvas {
+        display: block;
+        margin: auto;
+        background: rgb(30, 15, 40);
+    }
+
+    #ui {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        color: white;
+        font-size: 24px;
+        line-height: 1.5;
+        text-shadow: 2px 2px 4px black;
+    }
+</style>
+</head>
+
+<body>
+
+<div id="ui">
+    <div id="health">Health: 5</div>
+    <div id="wave">Wave: 1</div>
+    <div id="score">Score: 0</div>
+</div>
+
+<canvas id="game"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = 1000;
+canvas.height = 700;
+
+const WIDTH = canvas.width;
+const HEIGHT = canvas.height;
+
+// LOAD IMAGES
+const bananaImg = new Image();
+bananaImg.src = "assets/banana.png";
+
+const cucumberImg = new Image();
+cucumberImg.src = "assets/cucumber.png";
+
+const strawberryImg = new Image();
+strawberryImg.src = "assets/strawberry.png";
+
+const orangeImg = new Image();
+orangeImg.src = "assets/orange.png";
+
+// PLAYER
+const player = {
+    x: WIDTH / 2,
+    y: HEIGHT / 2,
+    radius: 25,
+    health: 5
+};
+
+// GAME
+let score = 0;
+let wave = 1;
+
+// DRAWING
+let drawing = false;
+let drawPoints = [];
+let drawColor = "white";
+let clearTimer = 0;
+
+// ENEMIES
+let ghosts = [];
+
+let spawnTimer = 0;
+let spawnDelay = 120;
+
+// IMAGE MAP
+const fruitMap = {
+    horizontal: bananaImg,
+    vertical: cucumberImg,
+    v: strawberryImg,
+    circle: orangeImg
+};
+
+// SPAWN ENEMY
+function spawnGhost() {
+
+    let side = ["top", "bottom", "left", "right"][
+        Math.floor(Math.random() * 4)
+    ];
+
+    let x, y;
+
+    if (side === "top") {
+        x = Math.random() * WIDTH;
+        y = -50;
+    }
+    else if (side === "bottom") {
+        x = Math.random() * WIDTH;
+        y = HEIGHT + 50;
+    }
+    else if (side === "left") {
+        x = -50;
+        y = Math.random() * HEIGHT;
+    }
+    else {
+        x = WIDTH + 50;
+        y = Math.random() * HEIGHT;
+    }
+
+    let types = [
+        "horizontal",
+        "vertical",
+        "v",
+        "circle"
+    ];
+
+    let type = types[
+        Math.floor(Math.random() * types.length)
+    ];
+
+    // LEVELS
+    let roll = Math.floor(Math.random() * 100) + 1;
+
+    let level = 1;
+    let health = 1;
+
+    if (roll <= 10) {
+        level = 3;
+        health = 3;
+    }
+    else if (roll <= 30) {
+        level = 2;
+        health = 2;
+    }
+
+    ghosts.push({
+        x,
+        y,
+        type,
+        level,
+        health
+    });
+}
+
+// STARTING ENEMIES
+for (let i = 0; i < 3; i++) {
+    spawnGhost();
+}
+
+// MOUSE EVENTS
+canvas.addEventListener("mousedown", () => {
+    drawing = true;
+    drawPoints = [];
+});
+
+canvas.addEventListener("mouseup", () => {
+
+    drawing = false;
+
+    if (drawPoints.length > 5) {
+
+        let start = drawPoints[0];
+        let end = drawPoints[drawPoints.length - 1];
+        let mid = drawPoints[
+            Math.floor(drawPoints.length / 2)
+        ];
+
+        let dx = Math.abs(end.x - start.x);
+        let dy = Math.abs(end.y - start.y);
+
+        let endDistance = Math.hypot(
+            end.x - start.x,
+            end.y - start.y
+        );
+
+        let drawnType;
+
+        // CIRCLE
+        if (
+            endDistance < 60 &&
+            drawPoints.length > 20
+        ) {
+            drawColor = "orange";
+            drawnType = "circle";
+        }
+
+        // V SHAPE
+        else if (
+            mid.y > start.y &&
+            mid.y > end.y
+        ) {
+            drawColor = "red";
+            drawnType = "v";
+        }
+
+        // HORIZONTAL
+        else if (dx > dy) {
+            drawColor = "yellow";
+            drawnType = "horizontal";
+        }
+
+        // VERTICAL
+        else {
+            drawColor = "lime";
+            drawnType = "vertical";
+        }
+
+        // FIND CLOSEST MATCHING ENEMY
+        let closestGhost = null;
+        let closestDistance = Infinity;
+
+        ghosts.forEach(g => {
+
+            if (g.type === drawnType) {
+
+                let dist = Math.hypot(
+                    g.x - player.x,
+                    g.y - player.y
+                );
+
+                if (dist < closestDistance) {
+                    closestDistance = dist;
+                    closestGhost = g;
+                }
+            }
+        });
+
+        // DAMAGE
+        if (closestGhost) {
+
+            closestGhost.health--;
+
+            if (closestGhost.health <= 0) {
+
+                ghosts = ghosts.filter(
+                    g => g !== closestGhost
+                );
+
+                score++;
+
+                // WAVE SYSTEM
+                if (score % 10 === 0) {
+
+                    wave++;
+
+                    if (spawnDelay > 30) {
+                        spawnDelay -= 10;
+                    }
+                }
+            }
+        }
+    }
+
+    clearTimer = 20;
+});
+
+canvas.addEventListener("mousemove", e => {
+
+    if (drawing) {
+
+        const rect = canvas.getBoundingClientRect();
+
+        drawPoints.push({
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
+        });
+    }
+});
+
+// UPDATE
+function update() {
+
+    spawnTimer++;
+
+    if (spawnTimer >= spawnDelay) {
+        spawnTimer = 0;
+        spawnGhost();
+    }
+
+    ghosts.forEach((ghost, index) => {
+
+        let dx = player.x - ghost.x;
+        let dy = player.y - ghost.y;
+
+        let distance = Math.hypot(dx, dy);
+
+        if (distance !== 0) {
+            dx /= distance;
+            dy /= distance;
+        }
+
+        let speed = 2 + wave * 0.1;
+
+        ghost.x += dx * speed;
+        ghost.y += dy * speed;
+
+        // HIT PLAYER
+        if (distance < 30) {
+
+            player.health--;
+
+            ghosts.splice(index, 1);
+
+            if (player.health <= 0) {
+
+                alert(
+                    "GAME OVER\nScore: " + score
+                );
+
+                location.reload();
+            }
+        }
+    });
+
+    // CLEAR DRAWING
+    if (clearTimer > 0) {
+
+        clearTimer--;
+
+        if (clearTimer === 0) {
+            drawPoints = [];
+        }
+    }
+}
+
+// DRAW
+function draw() {
+
+    // BACKGROUND
+    ctx.fillStyle = "rgb(30,15,40)";
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+    // PLAYER
+    ctx.beginPath();
+
+    ctx.arc(
+        player.x,
+        player.y,
+        player.radius,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fillStyle = "rgb(120,220,255)";
+    ctx.fill();
+
+    // ENEMIES
+    ghosts.forEach(ghost => {
+
+        let size = 60;
+
+        if (ghost.level === 2) {
+            size = 75;
+        }
+
+        if (ghost.level === 3) {
+            size = 90;
+        }
+
+        ctx.drawImage(
+            fruitMap[ghost.type],
+            ghost.x - size / 2,
+            ghost.y - size / 2,
+            size,
+            size
+        );
+
+        // HEALTH TEXT
+        if (ghost.health > 1) {
+
+            ctx.fillStyle = "red";
+            ctx.font = "24px Arial";
+
+            ctx.fillText(
+                ghost.health,
+                ghost.x,
+                ghost.y + size / 2
+            );
+        }
+    });
+
+    // DRAW PLAYER LINE
+    if (drawPoints.length > 1) {
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            drawPoints[0].x,
+            drawPoints[0].y
+        );
+
+        for (let i = 1; i < drawPoints.length; i++) {
+
+            ctx.lineTo(
+                drawPoints[i].x,
+                drawPoints[i].y
+            );
+        }
+
+        ctx.strokeStyle = drawColor;
+        ctx.lineWidth = 6;
+        ctx.stroke();
+    }
+
+    // UI
+    document.getElementById("health")
+        .innerText = "Health: " + player.health;
+
+    document.getElementById("wave")
+        .innerText = "Wave: " + wave;
+
+    document.getElementById("score")
+        .innerText = "Score: " + score;
+}
+
+// GAME LOOP
+function gameLoop() {
+
+    update();
+    draw();
+
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
+</body>
+</html>
