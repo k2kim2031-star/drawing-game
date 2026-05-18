@@ -242,57 +242,55 @@ canvas.addEventListener("mouseup", () => {
         let drawnType;
 
         // HORIZONTAL
-if (
-    dx > dy * 2
-) {
-    drawColor = "yellow";
-    drawnType = "horizontal";
-}
+        if (
+            dx > dy * 2
+        ) {
+            drawColor = "yellow";
+            drawnType = "horizontal";
+        }
 
-// VERTICAL
-else if (
-    dy > dx * 2
-) {
-    drawColor = "lime";
-    drawnType = "vertical";
-}
+        // VERTICAL
+        else if (
+            dy > dx * 2
+        ) {
+            drawColor = "lime";
+            drawnType = "vertical";
+        }
 
-// CIRCLE
-else if (
-    endDistance < 60 &&
-    drawPoints.length > 20
-) {
-    drawColor = "orange";
-    drawnType = "circle";
-}
+        // CIRCLE
+        else if (
+            endDistance < 60 &&
+            drawPoints.length > 20
+        ) {
+            drawColor = "orange";
+            drawnType = "circle";
+        }
 
-// V SHAPE
-else if (
-    mid.y > start.y + 40 &&
-    mid.y > end.y + 40
-) {
-    drawColor = "red";
-    drawnType = "v";
-}
+        // V SHAPE
+        else if (
+            mid.y > start.y + 40 &&
+            mid.y > end.y + 40
+        ) {
+            drawColor = "red";
+            drawnType = "v";
+        }
 
-// TRIANGLE
-else if (
-    endDistance < 80 &&
-    drawPoints.length > 25
-) {
-    drawColor = "cyan";
-    drawnType = "triangle";
-}
+        // TRIANGLE
+        else if (
+            endDistance < 80 &&
+            drawPoints.length > 25
+        ) {
+            drawColor = "cyan";
+            drawnType = "triangle";
+        }
 
-// ZIGZAG
-else {
-    drawColor = "magenta";
-    drawnType = "zigzag";
-}
+        // ZIGZAG
+        else {
+            drawColor = "magenta";
+            drawnType = "zigzag";
+        }
 
-        // =======================
         // DAMAGE MATCHING ENEMIES
-        // =======================
 
         for (let i = ghosts.length - 1; i >= 0; i--) {
 
@@ -338,7 +336,7 @@ canvas.addEventListener("mousemove", e => {
         const rect = canvas.getBoundingClientRect();
 
         // LIMIT DRAW POINTS
-        if (drawPoints.length < 120) {
+        if (drawPoints.length < 60) {
 
             drawPoints.push({
                 x: e.clientX - rect.left,
@@ -359,14 +357,17 @@ function update() {
     // LIMIT TOTAL ENEMIES
     if (
         spawnTimer >= spawnDelay &&
-        ghosts.length < 40
+        ghosts.length < 25
     ) {
 
         spawnTimer = 0;
         spawnGhost();
     }
 
-    ghosts.forEach((ghost, index) => {
+    // MOVE ENEMIES
+    for (let i = ghosts.length - 1; i >= 0; i--) {
+
+        let ghost = ghosts[i];
 
         let dx = player.x - ghost.x;
         let dy = player.y - ghost.y;
@@ -388,7 +389,7 @@ function update() {
 
             player.health--;
 
-            ghosts.splice(index, 1);
+            ghosts.splice(i, 1);
 
             if (player.health <= 0) {
 
@@ -399,14 +400,14 @@ function update() {
                 location.reload();
             }
         }
-    });
+    }
 
     // CLEAR DRAWING
     if (clearTimer > 0) {
 
         clearTimer--;
 
-        if (clearTimer === 0) {
+        if (clearTimer <= 0) {
             drawPoints = [];
         }
     }
@@ -449,14 +450,19 @@ function draw() {
             size = 90;
         }
 
-        // DRAW IMAGE
-        ctx.drawImage(
-            fruitMap[ghost.type],
-            ghost.x - size / 2,
-            ghost.y - size / 2,
-            size,
-            size
-        );
+        // ONLY DRAW IF IMAGE LOADED
+        let img = fruitMap[ghost.type];
+
+        if (img.complete) {
+
+            ctx.drawImage(
+                img,
+                ghost.x - size / 2,
+                ghost.y - size / 2,
+                size,
+                size
+            );
+        }
 
         // DRAW SHAPES
         ctx.fillStyle = "white";
