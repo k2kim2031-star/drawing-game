@@ -241,54 +241,54 @@ canvas.addEventListener("mouseup", () => {
 
         let drawnType;
 
-        // CIRCLE
-        if (
-            endDistance < 60 &&
-            drawPoints.length > 20
-        ) {
-            drawColor = "orange";
-            drawnType = "circle";
-        }
-
-        // V SHAPE
-        else if (
-            mid.y > start.y &&
-            mid.y > end.y
-        ) {
-            drawColor = "red";
-            drawnType = "v";
-        }
-
-        // TRIANGLE
-        else if (
-            drawPoints.length > 15 &&
-            endDistance < 80
-        ) {
-            drawColor = "cyan";
-            drawnType = "triangle";
-        }
-
-        // ZIGZAG
-        else if (
-            drawPoints.length > 10 &&
-            dx > 50 &&
-            dy > 50
-        ) {
-            drawColor = "magenta";
-            drawnType = "zigzag";
-        }
-
         // HORIZONTAL
-        else if (dx > dy) {
-            drawColor = "yellow";
-            drawnType = "horizontal";
-        }
+if (
+    dx > dy * 2
+) {
+    drawColor = "yellow";
+    drawnType = "horizontal";
+}
 
-        // VERTICAL
-        else {
-            drawColor = "lime";
-            drawnType = "vertical";
-        }
+// VERTICAL
+else if (
+    dy > dx * 2
+) {
+    drawColor = "lime";
+    drawnType = "vertical";
+}
+
+// CIRCLE
+else if (
+    endDistance < 60 &&
+    drawPoints.length > 20
+) {
+    drawColor = "orange";
+    drawnType = "circle";
+}
+
+// V SHAPE
+else if (
+    mid.y > start.y + 40 &&
+    mid.y > end.y + 40
+) {
+    drawColor = "red";
+    drawnType = "v";
+}
+
+// TRIANGLE
+else if (
+    endDistance < 80 &&
+    drawPoints.length > 25
+) {
+    drawColor = "cyan";
+    drawnType = "triangle";
+}
+
+// ZIGZAG
+else {
+    drawColor = "magenta";
+    drawnType = "zigzag";
+}
 
         // =======================
         // DAMAGE MATCHING ENEMIES
