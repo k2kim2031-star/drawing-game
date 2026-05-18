@@ -290,52 +290,42 @@ canvas.addEventListener("mouseup", () => {
             drawnType = "vertical";
         }
 
-        // DAMAGE ALL MATCHING ENEMIES
+        // =======================
+        // DAMAGE MATCHING ENEMIES
+        // =======================
 
-        ghosts.forEach(ghost => {
+        for (let i = ghosts.length - 1; i >= 0; i--) {
 
-            // LEVEL 1
-            if (
-                ghost.shapes.length === 1 &&
-                ghost.shapes[0] === drawnType
-            ) {
-                ghost.health--;
-            }
+            let ghost = ghosts[i];
 
-            // LEVEL 2+
-            else if (
-                ghost.shapes.includes(drawnType)
-            ) {
+            let shapeIndex =
+                ghost.shapes.indexOf(drawnType);
 
-                ghost.shapes = ghost.shapes.filter(
-                    s => s !== drawnType
-                );
+            if (shapeIndex !== -1) {
+
+                ghost.shapes.splice(shapeIndex, 1);
 
                 ghost.health--;
-            }
-        });
 
-        // REMOVE DEAD ENEMIES
-        ghosts = ghosts.filter(ghost => {
+                // REMOVE DEAD ENEMY
+                if (ghost.health <= 0) {
 
-            if (ghost.health <= 0) {
+                    ghosts.splice(i, 1);
 
-                score++;
+                    score++;
 
-                if (score % 10 === 0) {
+                    // WAVE SYSTEM
+                    if (score % 10 === 0) {
 
-                    wave++;
+                        wave++;
 
-                    if (spawnDelay > 30) {
-                        spawnDelay -= 10;
+                        if (spawnDelay > 30) {
+                            spawnDelay -= 10;
+                        }
                     }
                 }
-
-                return false;
             }
-
-            return true;
-        });
+        }
 
         clearTimer = 20;
     }
@@ -347,10 +337,14 @@ canvas.addEventListener("mousemove", e => {
 
         const rect = canvas.getBoundingClientRect();
 
-        drawPoints.push({
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
-        });
+        // LIMIT DRAW POINTS
+        if (drawPoints.length < 120) {
+
+            drawPoints.push({
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            });
+        }
     }
 });
 
@@ -362,7 +356,11 @@ function update() {
 
     spawnTimer++;
 
-    if (spawnTimer >= spawnDelay) {
+    // LIMIT TOTAL ENEMIES
+    if (
+        spawnTimer >= spawnDelay &&
+        ghosts.length < 40
+    ) {
 
         spawnTimer = 0;
         spawnGhost();
